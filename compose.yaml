@@ -1,0 +1,8 @@
+services:
+  app:
+    extends:
+      file: compose.nonlocal.yaml
+      service: app
+    image: ghcr.io/rmitchellscott/aviary-integration-ses:local
+    build:
+      target: local

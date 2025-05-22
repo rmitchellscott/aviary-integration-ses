@@ -1,0 +1,13 @@
+services:
+  app:
+    image: ghcr.io/rmitchellscott/aviary-integration-ses:beta
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - 9000:8080
+    develop:
+      watch:
+        - action: rebuild
+          path: .
