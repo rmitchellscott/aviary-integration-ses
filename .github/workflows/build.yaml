@@ -106,3 +106,22 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max 
+
+
+      - name: Extract ARM64 digest
+        id: extract-arm64
+        run: |
+          ECR_URI=952638226427.dkr.ecr.us-east-2.amazonaws.com/aviary-integration-ses
+          TAG=latest
+          # use buildx imagetools to inspect the manifest list
+          DIGEST=$(docker buildx imagetools inspect $ECR_URI:$TAG --raw \
+            | jq -r '.manifests[] | select(.platform.architecture=="arm64") | .digest')
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Update Lambda to ARM64 image
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          ECR_URI=952638226427.dkr.ecr.us-east-2.amazonaws.com/aviary-integration-ses
+          aws lambda update-function-code \
+            --function-name aviary-integration-ses \
+            --image-uri $ECR_URI@${{ steps.extract-arm64.outputs.digest }}
