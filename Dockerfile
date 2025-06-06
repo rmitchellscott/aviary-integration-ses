@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache \
   CGO_ENABLED=0 xx-go build -ldflags='-w -s' -tags lambda.norpc -trimpath -o aviary-integration-ses .
 
 
-FROM alpine:3.21 AS rie
+FROM alpine:3.22 AS rie
 WORKDIR /app
 ARG TARGETPLATFORM
 ARG RIE_VERSION=v1.23
