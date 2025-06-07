@@ -26,6 +26,7 @@ var (
 	presigner  *s3.PresignClient
 	bucket     string
 	webhookURL string
+	apiKey     string
 	urlTTL     = 15 * time.Minute
 )
 
@@ -47,6 +48,7 @@ func init() {
 	if webhookURL == "" {
 		log.Fatal("WEBHOOK_URL env var required")
 	}
+	apiKey = os.Getenv("API_KEY")
 }
 
 func handler(ctx context.Context, event events.S3Event) error {
@@ -119,11 +121,23 @@ func handler(ctx context.Context, event events.S3Event) error {
 			form.Set("Body", pr.URL)
 			form.Set("rm_dir", rmDir)
 
-			rsp, err := http.PostForm(webhookURL, form)
+			req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhookURL, strings.NewReader(form.Encode()))
+			if err != nil {
+				log.Printf("create webhook request failed: %v", err)
+				continue
+			}
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			if apiKey != "" {
+				req.Header.Set("Authorization", "Bearer "+apiKey)
+			}
+
+			rsp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				log.Printf("POST webhook failed: %v", err)
 			}
-			rsp.Body.Close()
+			if rsp != nil {
+				rsp.Body.Close()
+			}
 		}
 	}
 	return nil
