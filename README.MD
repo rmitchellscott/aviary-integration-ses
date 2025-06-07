@@ -4,8 +4,8 @@ A containerized AWS Lambda (Go) that listens for raw email files in S3, extracts
 
 ## Architecture
 
-1. **SES** drops raw email into **S3** (raw-email bucket).  
-2. **S3 → Lambda** trigger fires on `ObjectCreated` events.  
+1. **SES** drops raw email into **S3** (raw-email bucket).
+2. **S3 → Lambda** trigger fires on `ObjectCreated` events.
 3. **Lambda** (Go + enmime):
    - Retrieves the email from S3.
    - Parses all attachments; filters for `.pdf` & `.epub`.
@@ -19,24 +19,24 @@ A containerized AWS Lambda (Go) that listens for raw email files in S3, extracts
 
 - Go 1.24+, Docker, AWS CLI configured with appropriate rights.
 - Two S3 buckets:
-  - **Raw email** bucket (no suffix filter; any object triggers the Lambda).  
-  - **Attachment** bucket (where extracted files are stored).  
+  - **Raw email** bucket (no suffix filter; any object triggers the Lambda).
+  - **Attachment** bucket (where extracted files are stored).
 - Aviary webhook endpoint accessible to the Lambda.
 - IAM permissions (see below).
 
 ## Local Development & Testing
 
-1. **Clone & configure**  
+1. **Clone & configure**
    ```bash
    git clone git@github.com:rmitchellscott/aviary-integration-ses.git
    cd aviary-integration-ses
    go mod download
    ```
 
-2. **Prepare sample email**  
+2. **Prepare sample email**
    Place a `.eml` file (with PDF/EPUB attachments) at `./sample.eml`.
 
-3. **Build & run locally**  
+3. **Build & run locally**
    ```bash
    # Build the “local” image (includes AWS Lambda RIE)
    docker build      --platform linux/amd64      --target local      -t aviary-ses-local .
@@ -45,9 +45,13 @@ A containerized AWS Lambda (Go) that listens for raw email files in S3, extracts
    export AWS_REGION=us-east-2
    export ATTACHMENT_BUCKET=my-attachments-bucket
    export WEBHOOK_URL=https://aviary.example.com/api/webhook
+   # Optional: API key for Authorization header
+   export API_KEY=your-api-key
 
    # Run the container
-   docker run -d      --name aviary-ses-local      -p 9000:8080      -e AWS_REGION      -e ATTACHMENT_BUCKET      -e WEBHOOK_URL      -v ~/.aws:/root/.aws:ro      aviary-ses-local
+   docker run -d      --name aviary-ses-local      -p 9000:8080 \
+      -e AWS_REGION -e ATTACHMENT_BUCKET -e WEBHOOK_URL -e API_KEY \
+      -v ~/.aws:/root/.aws:ro aviary-ses-local
 
    # Invoke with a fake S3 event
    cat > event.json <<EOF
@@ -77,7 +81,7 @@ docker build   --platform linux/amd64,linux/arm64   --target base   -t 123456789
 
 ## AWS Deployment
 
-### 1. Push to ECR  
+### 1. Push to ECR
 
 ```bash
 aws ecr create-repository --repository-name aviary-integration-ses --region us-east-2
@@ -87,10 +91,10 @@ aws ecr get-login-password --region us-east-2   | docker login --username AWS   
 docker push 123456789123.dkr.ecr.us-east-2.amazonaws.com/aviary-integration-ses:latest
 ```
 
-### 2. IAM Role & Policies  
+### 2. IAM Role & Policies
 
-- **Assume role** trust policy for Lambda service.  
-- Attach **AWSLambdaBasicExecutionRole** for CloudWatch Logs.  
+- **Assume role** trust policy for Lambda service.
+- Attach **AWSLambdaBasicExecutionRole** for CloudWatch Logs.
 - Inline policy granting:
   ```json
   {
@@ -102,16 +106,17 @@ docker push 123456789123.dkr.ecr.us-east-2.amazonaws.com/aviary-integration-ses:
   }
   ```
 
-### 3. Create Lambda (Container Image)  
+### 3. Create Lambda (Container Image)
 
 ```bash
 aws lambda create-function   --region us-east-2   --function-name aviary-integration-ses   --package-type Image   --code ImageUri=123456789123.dkr.ecr.us-east-2.amazonaws.com/aviary-integration-ses:latest   --role arn:aws:iam::123456789123:role/aviary-integration-ses-role   --environment Variables="{
     ATTACHMENT_BUCKET=my-attachments-bucket,
-    WEBHOOK_URL=https://aviary.example.com/api/webhook
+    WEBHOOK_URL=https://aviary.example.com/api/webhook,
+    API_KEY=your-api-key
   }"
 ```
 
-### 4. Wire S3 → Lambda Trigger  
+### 4. Wire S3 → Lambda Trigger
 
 ```bash
 # Give S3 permission to invoke your Lambda
@@ -129,7 +134,7 @@ aws s3api put-bucket-notification-configuration   --region us-east-2   --bucket 
 
 ## CI/CD with GitHub Actions
 
-- OIDC → assume IAM role (`GitHubActionsRole`)  
+- OIDC → assume IAM role (`GitHubActionsRole`)
 - Build + push multi-arch images to: `123456789123.dkr.ecr.us-east-2.amazonaws.com/aviary-integration-ses`
 
 See [`.github/workflows/build.yml`](.github/workflows/build.yml) for details.
