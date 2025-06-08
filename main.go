@@ -66,7 +66,9 @@ func handler(ctx context.Context, event events.S3Event) error {
 			continue
 		}
 		raw, err := io.ReadAll(objOut.Body)
-		objOut.Body.Close()
+		if cerr := objOut.Body.Close(); cerr != nil {
+			log.Printf("close object body failed: %v", cerr)
+		}
 		if err != nil {
 			log.Printf("ReadAll failed for %s: %v", key, err)
 			continue
@@ -136,7 +138,9 @@ func handler(ctx context.Context, event events.S3Event) error {
 				log.Printf("POST webhook failed: %v", err)
 			}
 			if rsp != nil {
-				rsp.Body.Close()
+				if cerr := rsp.Body.Close(); cerr != nil {
+					log.Printf("close webhook response body failed: %v", cerr)
+				}
 			}
 		}
 	}
