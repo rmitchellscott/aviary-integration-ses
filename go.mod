@@ -7,7 +7,6 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.15
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.80.1
-	github.com/jhillyerd/enmime v1.3.0
 	github.com/jhillyerd/enmime/v2 v2.1.0
 )
 
