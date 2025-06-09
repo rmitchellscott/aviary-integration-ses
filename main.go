@@ -31,6 +31,8 @@ var (
 )
 
 func init() {
+	log.SetOutput(os.Stdout)
+	log.SetFlags(log.LstdFlags)
 	ctx := context.Background()
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
@@ -49,6 +51,8 @@ func init() {
 		log.Fatal("WEBHOOK_URL env var required")
 	}
 	apiKey = os.Getenv("API_KEY")
+
+	log.Printf("configured with bucket=%s webhookURL=%s", bucket, webhookURL)
 }
 
 func handler(ctx context.Context, event events.S3Event) error {
