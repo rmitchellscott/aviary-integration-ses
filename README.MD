@@ -138,3 +138,8 @@ aws s3api put-bucket-notification-configuration   --region us-east-2   --bucket 
 - Build + push multi-arch images to: `123456789123.dkr.ecr.us-east-2.amazonaws.com/aviary-integration-ses`
 
 See [`.github/workflows/build.yml`](.github/workflows/build.yml) for details.
+
+## License
+Copyright (C) 2025 Mitchell Scott
+
+Licensed under the GNU General Public License v3.0.
